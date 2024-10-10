@@ -41,7 +41,7 @@ def add_flags(ctx, fmt, output_path, bib_tool):
     flags.append("--bibtex-args=" + "--input-directory=" + dir_pos)
     return flags
 
-def lualatex_engine_cmd_gen(ctx, bib_tool, latex_tool):
+def lualatex_engine_cmd_gen(ctx, bib_tool, latex_tool, epoch_file):
     """
     Generate commands specific for the lualatex engine.
 
@@ -55,6 +55,7 @@ def lualatex_engine_cmd_gen(ctx, bib_tool, latex_tool):
       latex_tool: The latex engine to use, in this case we make the
         assumption that it is the luahbtex binary (This should be
         enforced more strongly).
+      epoch_file: Epoch timestamp file
 
     Returns:
       A list of the commands
@@ -79,6 +80,8 @@ def lualatex_engine_cmd_gen(ctx, bib_tool, latex_tool):
         ),
     )
     args.add("-Wall")
+
+    args.add("--epoch_file={}".format(epoch_file.path))
 
     if ctx.attr.format == "dvi":
         absolute_font_path_dvi = ctx.actions.declare_file(

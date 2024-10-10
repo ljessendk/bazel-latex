@@ -148,9 +148,6 @@ def _latex_impl(ctx):
         "bibtex": toolchain.bibtex.files.to_list()[0],
     }[ctx.attr.bib_tool]
 
-    engine_cmds_gen = get_engine_cmds_gen(ctx.attr._progname)
-    engine_cmds = engine_cmds_gen(ctx, bib_tool, latex_tool)
-
     files = (
         ctx.files.srcs +
         ctx.files.main +
@@ -158,6 +155,65 @@ def _latex_impl(ctx):
         ctx.files.font_maps +
         ctx.files.web2c
     )
+
+    dependencies = depset(
+        direct = files +
+            ctx.files._latexrun,
+        transitive = [latex_tool.files] + dep_tools,
+    )
+
+    if ctx.attr.source_date_epoch_strategy == "use_file":
+        epoch_file = ctx.file.epoch_file
+    else:
+        epoch_file = ctx.actions.declare_file(ctx.label.name + ".epoch")
+
+        if ctx.attr.source_date_epoch_strategy == "set_to_0":
+            ctx.actions.write(epoch_file, "0")
+
+        elif ctx.attr.source_date_epoch_strategy == "specify_date":
+            if ctx.attr.source_date_epoch_date == None:
+                fail("Must specify 'source_date_epoch_date'")
+            if len(ctx.attr.source_date_epoch_date) != 10:
+                fail("Date must be in yyyy-mm-dd format")
+
+            ctx.actions.run_shell(
+                mnemonic = "GenerateEpochFile",
+                use_default_shell_env = True,
+                command = "\n".join([
+                    "set -e -o pipefail",
+                    "date -d {epoch_file_date} +'%s' | tr -d '\n' > {epoch_file}".format(epoch_file_date = ctx.attr.source_date_epoch_date, epoch_file = epoch_file.path)
+                ]),
+                inputs = depset(direct = [ctx.version_file], transitive = [dependencies]),
+                outputs = [epoch_file],
+            )
+
+        elif ctx.attr.source_date_epoch_strategy == "stamp_with_date":
+            ctx.actions.run_shell(
+                mnemonic = "GenerateEpochFile",
+                use_default_shell_env = True,
+                command = "\n".join([
+                    "set -e -o pipefail",
+                    "date -d $(date -u -d @$(cat {volatile_status} | grep 'BUILD_TIMESTAMP' | awk -F ' ' '{{printf $2}}') +'%Y-%m-%d') +'%s' | tr -d '\n' > {epoch_file}".format(volatile_status = ctx.version_file.path, epoch_file = epoch_file.path)
+                ]),
+                inputs = depset(direct = [ctx.version_file], transitive = [dependencies]),
+                outputs = [epoch_file],
+            )
+        elif ctx.attr.source_date_epoch_strategy == "stamp_with_current_year":
+            ctx.actions.run_shell(
+                mnemonic = "GenerateEpochFile",
+                use_default_shell_env = True,
+                command = "\n".join([
+                    "set -e -o pipefail",
+                    "date -d \"$(date -d @$(cat {volatile_status} | grep 'BUILD_TIMESTAMP' | awk -F ' ' '{{printf $2}}') +'%Y-01-01 00:00:00')\" +'%s' | tr -d '\n' > {epoch_file}".format(volatile_status = ctx.version_file.path, epoch_file = epoch_file.path)
+                ]),
+                inputs = depset(direct = [ctx.version_file], transitive = [dependencies]),
+                outputs = [epoch_file],
+            )
+        else:
+            fail("Unknown file_stamp_strategy: {}".format(ctx.attr.source_date_epoch_strategy))
+
+    engine_cmds_gen = get_engine_cmds_gen(ctx.attr._progname)
+    engine_cmds = engine_cmds_gen(ctx, bib_tool, latex_tool, epoch_file)
 
     env = get_env(ctx, toolchain, files)
     for engine_cmd in engine_cmds:
@@ -168,7 +224,8 @@ def _latex_impl(ctx):
             inputs = depset(
                 direct = files +
                          ctx.files._latexrun +
-                         engine_cmd["in"],
+                         engine_cmd["in"] +
+                         [epoch_file],
                 transitive = [latex_tool.files] + dep_tools,
             ),
             outputs = engine_cmd["out"],
@@ -227,11 +284,18 @@ _latex = rule(
         #       user can set their engine of choice
         "_engine": attr.string(default = "luahbtex"),
         "_latexrun": attr.label(
-            default = "@bazel_latex_latexrun//:latexrun",
+            #default = "@bazel_latex_latexrun//:latexrun",
+            default = "//:latexrun",
             executable = True,
             cfg = "exec",
         ),
         "_progname": attr.string(default = "lualatex"),
+        "source_date_epoch_file": attr.label(allow_single_file = True),
+        "source_date_epoch_date": attr.string(),
+        "source_date_epoch_strategy": attr.string(
+            values = list(["stamp_with_current_date", "stamp_with_current_year", "use_file", "specify_date", "set_to_0"]),
+            default = "set_to_0",
+        )
     },
     outputs = {"out": "%{name}.%{format}"},
     toolchains = ["@bazel_latex//:latex_toolchain_type"],

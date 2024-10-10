@@ -10,10 +10,12 @@ latex_document(
         "references.bib",
         "//example/example_class",
         "@bazel_latex//packages:biblatex",
+        "@bazel_latex//packages:datetime",
     ],
     bib_tool = "biber",  # Is the default
     main = "my_report.tex",
     visibility = ["//visibility:public"],
+    source_date_epoch_strategy = "stamp_with_current_year",
 )
 
 latex_document(
@@ -24,6 +26,7 @@ latex_document(
         "references.bib",
         "//example/example_class",
         "@bazel_latex//packages:biblatex",
+        "@bazel_latex//packages:datetime",
     ],
     format = "dvi",
     main = "my_report.tex",
