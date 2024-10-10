@@ -8,12 +8,14 @@ latex_document(
         "chapters/*.tex",
     ]) + [
         "@bazel_latex//packages:biblatex",
+        "@bazel_latex//packages:datetime",
         "references.bib",
         "//example/example_class:example_class",
     ],
     bib_tool = "biber",  # Is the default
     main = "my_report.tex",
     visibility = ["//visibility:public"],
+    source_date_epoch_strategy = "stamp_with_current_year",
 )
 
 latex_document(
@@ -22,6 +24,7 @@ latex_document(
         "chapters/*.tex",
     ]) + [
         "@bazel_latex//packages:biblatex",
+        "@bazel_latex//packages:datetime",
         "references.bib",
         "//example/example_class:example_class",
     ],

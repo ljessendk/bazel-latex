@@ -107,3 +107,9 @@ compile_pip_requirements(
     requirements_txt = "requirements_lock.txt",
     tags = ["manual"],
 )
+
+py_binary(
+    name = "latexrun",
+    srcs = ["latexrun.py"],
+    visibility = ["//visibility:public"],
+)

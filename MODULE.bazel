@@ -53,6 +53,6 @@ use_repo(texlive_repositories,
 
 module_repositories = use_extension("//:repositories.bzl", "module_repositories")
 use_repo(module_repositories,
-    "bazel_latex_latexrun",
+    #"bazel_latex_latexrun",
     "ghost_script_source"
 )
