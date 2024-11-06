@@ -84,6 +84,7 @@ def get_env(ctx, toolchain, files):
     type_env = {}
     setup_env_for(type_env, "AFMFONTS", files, [".afm"])
     setup_env_for(type_env, "BIBINPUTS", files, [".bib"])
+    setup_env_for(type_env, "BSTINPUTS", files, [".bst"])
     setup_env_for(type_env, "ENCFONTS", files, [".enc"])
     setup_env_for(
         type_env,

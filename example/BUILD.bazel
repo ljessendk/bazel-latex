@@ -67,3 +67,16 @@ latex_to_svg(
     src = ":my_standalone_figure",
     args = ["-e"],
 )
+
+latex_document(
+    name = "bibtex_test",
+    srcs = [
+        "references.bib",
+        "bibtex_test.tex",
+        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__bibtex__bst__base",
+    ],
+    bib_tool = "bibtex",
+    main = "bibtex_test.tex",
+    visibility = ["//visibility:public"],
+    source_date_epoch_strategy = "stamp_with_current_year",
+)

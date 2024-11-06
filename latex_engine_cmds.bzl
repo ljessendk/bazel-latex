@@ -38,7 +38,8 @@ def add_flags(ctx, fmt, output_path, bib_tool):
     dir_count = len(output_path.split("/")) - 1
     dir_pos = dir_count * "../"
     flags.append("--bibtex-cmd=" + dir_pos + bib_tool.path)
-    flags.append("--bibtex-args=" + "--input-directory=" + dir_pos)
+    if bib_tool.basename == "biber":
+        flags.append("--bibtex-args=" + "--input-directory=" + dir_pos)
     return flags
 
 def lualatex_engine_cmd_gen(ctx, bib_tool, latex_tool, epoch_file):

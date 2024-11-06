@@ -168,6 +168,18 @@ def main():
         with open(args.epoch_file, 'r') as f:
             os.environ["SOURCE_DATE_EPOCH"] = f.read()
     try:
+        bibinputs = os.environ.get('PATH')
+        if bibinputs:
+            os.environ["PATH"] = ":".join([os.path.abspath(path) for path in bibinputs.split(":")])
+
+        bibinputs = os.environ.get('BIBINPUTS')
+        if bibinputs:
+            os.environ["BIBINPUTS"] = ":".join([os.path.abspath(path) for path in bibinputs.split(":")])
+
+        bstinputs = os.environ.get('BSTINPUTS')
+        if bstinputs:
+            os.environ["BSTINPUTS"] = ":".join([os.path.abspath(path) for path in bstinputs.split(":")])
+
         task_latex = LaTeX(db, args.file, args.latex_cmd, args.latex_args,
                            args.obj_dir, args.nowarns)
         task_commit = LaTeXCommit(db, task_latex, args.output)
@@ -1961,6 +1973,7 @@ class Kpathsea:
                 name]
         try:
             verbose_cmd(args, cwd, env)
+
             path = subprocess.check_output(
                 args, cwd=cwd, env=env, universal_newlines=True).strip()
         except subprocess.CalledProcessError as e:
